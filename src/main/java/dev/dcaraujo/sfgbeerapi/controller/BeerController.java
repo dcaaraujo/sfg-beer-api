@@ -32,7 +32,7 @@ public class BeerController {
 
     @PostMapping
     public ResponseEntity<Void> createBeer(@RequestBody BeerForm beer, UriComponentsBuilder builder) {
-        Beer savedBeer = beerService.saveBeer(beer);
+        var savedBeer = beerService.saveBeer(beer);
         var uri = builder.path("/api/v1/beer/{id}").buildAndExpand(savedBeer.getId()).toUri();
         return ResponseEntity.created(uri).build();
     }

@@ -31,24 +31,24 @@ public class CustomerController {
 
     @PostMapping
     public ResponseEntity<Void> createCustomer(@RequestBody CustomerForm customer, UriComponentsBuilder builder) {
-        Customer savedCustomer = customerService.saveCustomer(customer);
+        var savedCustomer = customerService.saveCustomer(customer);
         var uri = builder.path("/api/v1/customer/{id}").buildAndExpand(savedCustomer.getId()).toUri();
         return ResponseEntity.created(uri).build();
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("{id}")
     public ResponseEntity<Void> updateCustomerByID(@PathVariable UUID id, @RequestBody CustomerForm customer) {
         customerService.updateCustomer(id, customer);
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{id}")
+    @PatchMapping("{id}")
     public ResponseEntity<Void> patchCustomerById(@PathVariable UUID id, @RequestBody CustomerForm customer) {
         customerService.patchCustomer(id, customer);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("{id}")
     public ResponseEntity<Void> deleteCustomerById(@PathVariable UUID id) {
         customerService.deleteCustomer(id);
         return ResponseEntity.noContent().build();
