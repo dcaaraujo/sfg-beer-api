@@ -37,19 +37,19 @@ public class CustomerController {
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<Void> updateCustomerByID(@PathVariable UUID id, @RequestBody CustomerForm customer) {
+    public ResponseEntity<Void> updateCustomer(@PathVariable UUID id, @RequestBody CustomerForm customer) {
         customerService.updateCustomer(id, customer);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("{id}")
-    public ResponseEntity<Void> patchCustomerById(@PathVariable UUID id, @RequestBody CustomerForm customer) {
+    public ResponseEntity<Void> patchCustomer(@PathVariable UUID id, @RequestBody CustomerForm customer) {
         customerService.patchCustomer(id, customer);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("{id}")
-    public ResponseEntity<Void> deleteCustomerById(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteCustomer(@PathVariable UUID id) {
         customerService.deleteCustomer(id);
         return ResponseEntity.noContent().build();
     }
