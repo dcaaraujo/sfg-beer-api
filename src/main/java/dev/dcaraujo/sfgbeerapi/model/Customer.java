@@ -10,8 +10,8 @@ import java.util.UUID;
 @Builder
 public class Customer {
     private UUID id;
-    private String customerName;
+    private String name;
     private Integer version;
-    private LocalDateTime createdAt;
-    private LocalDateTime lastModifiedAt;
+    private LocalDateTime createdDate;
+    private LocalDateTime updateDate;
 }

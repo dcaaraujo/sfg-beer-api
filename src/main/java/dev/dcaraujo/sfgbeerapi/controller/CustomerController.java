@@ -1,34 +1,56 @@
 package dev.dcaraujo.sfgbeerapi.controller;
 
+import dev.dcaraujo.sfgbeerapi.dto.CustomerForm;
 import dev.dcaraujo.sfgbeerapi.model.Customer;
 import dev.dcaraujo.sfgbeerapi.service.CustomerService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 import java.util.UUID;
 
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 @RestController
-@RequestMapping("api/v1/customer")
+@RequestMapping("/api/v1/customer")
 public class CustomerController {
     private final CustomerService customerService;
 
     @GetMapping
-    public ResponseEntity<List<Customer>> getCustomers() {
-        log.info("Fetching all customers");
-        return ResponseEntity.ok(customerService.getCustomers());
+    public ResponseEntity<List<Customer>> getAllCustomers() {
+        return ResponseEntity.ok(customerService.fetchAllCustomers());
     }
 
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<Customer> getCustomer(@PathVariable UUID id) {
-        log.info("Fetching customer with ID {}", id);
-        return ResponseEntity.of(customerService.getCustomer(id));
+        return ResponseEntity.of(customerService.fetchCustomer(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<Void> createCustomer(@RequestBody CustomerForm customer, UriComponentsBuilder builder) {
+        Customer savedCustomer = customerService.saveCustomer(customer);
+        var uri = builder.path("/api/v1/customer/{id}").buildAndExpand(savedCustomer.getId()).toUri();
+        return ResponseEntity.created(uri).build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> updateCustomerByID(@PathVariable UUID id, @RequestBody CustomerForm customer) {
+        customerService.updateCustomer(id, customer);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Void> patchCustomerById(@PathVariable UUID id, @RequestBody CustomerForm customer) {
+        customerService.patchCustomer(id, customer);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCustomerById(@PathVariable UUID id) {
+        customerService.deleteCustomer(id);
+        return ResponseEntity.noContent().build();
     }
 }
