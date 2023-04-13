@@ -1,7 +1,6 @@
 package dev.dcaraujo.sfgbeerapi.controller;
 
-import dev.dcaraujo.sfgbeerapi.dto.BeerForm;
-import dev.dcaraujo.sfgbeerapi.model.Beer;
+import dev.dcaraujo.sfgbeerapi.dto.BeerDTO;
 import dev.dcaraujo.sfgbeerapi.service.BeerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,31 +19,34 @@ public class BeerController {
     private final BeerService beerService;
 
     @GetMapping
-    public ResponseEntity<List<Beer>> getAllBeers() {
-        var beers = beerService.fetchAllBeers();
-        return ResponseEntity.ok(beers);
+    public ResponseEntity<List<BeerDTO>> getAllBeers() {
+        return ResponseEntity.ok(beerService.fetchAllBeers());
     }
 
     @GetMapping("{id}")
-    public ResponseEntity<Beer> getBeer(@PathVariable UUID id) {
+    public ResponseEntity<BeerDTO> getBeer(@PathVariable UUID id) {
+        log.info("Fetching beer with ID {}", id);
         return ResponseEntity.of(beerService.fetchBeer(id));
     }
 
     @PostMapping
-    public ResponseEntity<Void> createBeer(@RequestBody BeerForm beer, UriComponentsBuilder builder) {
+    public ResponseEntity<Void> createBeer(@RequestBody BeerDTO beer, UriComponentsBuilder builder) {
         var savedBeer = beerService.saveBeer(beer);
         var uri = builder.path("/api/v1/beer/{id}").buildAndExpand(savedBeer.getId()).toUri();
         return ResponseEntity.created(uri).build();
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<Void> updateBeer(@PathVariable UUID id, @RequestBody BeerForm beer) {
-        beerService.updateBeer(id, beer);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> updateBeer(@PathVariable UUID id, @RequestBody BeerDTO beer) {
+        var result = beerService.updateBeer(id, beer);
+        if (result.isPresent()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @PatchMapping("{id}")
-    public ResponseEntity<Void> patchBeer(@PathVariable UUID id, @RequestBody BeerForm beer) {
+    public ResponseEntity<Void> patchBeer(@PathVariable UUID id, @RequestBody BeerDTO beer) {
         beerService.patchBeer(id, beer);
         return ResponseEntity.noContent().build();
     }

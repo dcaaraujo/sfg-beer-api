@@ -1,8 +1,7 @@
 package dev.dcaraujo.sfgbeerapi.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.dcaraujo.sfgbeerapi.dto.CustomerForm;
-import dev.dcaraujo.sfgbeerapi.model.Customer;
+import dev.dcaraujo.sfgbeerapi.dto.CustomerDTO;
 import dev.dcaraujo.sfgbeerapi.service.CustomerService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -28,7 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CustomerController.class)
-class CustomerControllerTest {
+public class CustomerControllerTest {
     public static final String ROOT_PATH = "/api/v1/customer";
     public static final String ROOT_PATH_ID = "/api/v1/customer/{id}";
 
@@ -42,13 +41,13 @@ class CustomerControllerTest {
     private ArgumentCaptor<UUID> idArgumentCaptor;
 
     @Captor
-    private ArgumentCaptor<CustomerForm> customerFormArgumentCaptor;
+    private ArgumentCaptor<CustomerDTO> customerFormArgumentCaptor;
 
     @MockBean
     private CustomerService customerService;
 
     @Test
-    void fetchingAllCustomers() throws Exception {
+    public void fetchingAllCustomers() throws Exception {
         var customers = List.of(createCustomer(), createCustomer(), createCustomer());
         given(customerService.fetchAllCustomers()).willReturn(customers);
         var request = get(ROOT_PATH).accept(MediaType.APPLICATION_JSON);
@@ -59,7 +58,7 @@ class CustomerControllerTest {
     }
 
     @Test
-    void fetchingCustomerById() throws Exception {
+    public void fetchingCustomerById() throws Exception {
         var customer = createCustomer();
         given(customerService.fetchCustomer(any())).willReturn(Optional.of(customer));
         var request = get(ROOT_PATH_ID, customer.getId()).accept(MediaType.APPLICATION_JSON);
@@ -71,15 +70,15 @@ class CustomerControllerTest {
     }
 
     @Test
-    void customerNotFound() throws Exception {
+    public void customerNotFound() throws Exception {
         given(customerService.fetchCustomer(any())).willReturn(Optional.empty());
         var request = get(ROOT_PATH_ID, UUID.randomUUID()).accept(MediaType.APPLICATION_JSON);
         mockMvc.perform(request).andExpect(status().isNotFound());
     }
 
     @Test
-    void creatingACustomer() throws Exception {
-        CustomerForm form = createForm();
+    public void creatingACustomer() throws Exception {
+        var form = CustomerDTO.builder().name("John Smith").build();
 
         given(customerService.saveCustomer(any())).willReturn(createCustomer());
         var request = post(ROOT_PATH)
@@ -92,9 +91,9 @@ class CustomerControllerTest {
     }
 
     @Test
-    void updatingACustomer() throws Exception {
+    public void updatingACustomer() throws Exception {
         var customerId = UUID.randomUUID();
-        var form = createForm();
+        var form = CustomerDTO.builder().name("John Smith").build();
         var request = put(ROOT_PATH_ID, customerId)
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -105,7 +104,7 @@ class CustomerControllerTest {
     }
 
     @Test
-    void deletingACustomer() throws Exception {
+    public void deletingACustomer() throws Exception {
         var customerId = UUID.randomUUID();
         var request = delete(ROOT_PATH_ID, customerId)
                 .accept(MediaType.APPLICATION_JSON);
@@ -115,7 +114,7 @@ class CustomerControllerTest {
     }
 
     @Test
-    void patchingACustomer() throws Exception {
+    public void patchingACustomer() throws Exception {
         var customerId = UUID.randomUUID();
         var customerName = "Keanu Reeves";
         var map = new HashMap<String, Object>();
@@ -130,19 +129,13 @@ class CustomerControllerTest {
         assertThat(customerFormArgumentCaptor.getValue().getName()).isEqualTo(customerName);
     }
 
-    private static Customer createCustomer() {
-        return Customer.builder()
+    private static CustomerDTO createCustomer() {
+        return CustomerDTO.builder()
                 .id(UUID.randomUUID())
                 .name("John Smith")
                 .version(1)
                 .createdDate(LocalDateTime.now())
                 .updateDate(LocalDateTime.now())
                 .build();
-    }
-
-    private static CustomerForm createForm() {
-        var form = new CustomerForm();
-        form.setName("John Smith");
-        return form;
     }
 }

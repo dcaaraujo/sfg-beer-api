@@ -1,124 +1,87 @@
 package dev.dcaraujo.sfgbeerapi.service;
 
-import dev.dcaraujo.sfgbeerapi.dto.BeerForm;
-import dev.dcaraujo.sfgbeerapi.model.Beer;
-import dev.dcaraujo.sfgbeerapi.model.BeerStyle;
+import dev.dcaraujo.sfgbeerapi.dto.BeerDTO;
+import dev.dcaraujo.sfgbeerapi.mapper.BeerMapper;
+import dev.dcaraujo.sfgbeerapi.repository.BeerRepository;
+import lombok.AllArgsConstructor;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
+@Primary
+@AllArgsConstructor
 public class BeerServiceImpl implements BeerService {
-    private final Map<UUID, Beer> beerMap;
+    private final BeerRepository repository;
+    private final BeerMapper mapper;
 
-    public BeerServiceImpl() {
-        var beer1 = Beer.builder()
-                .id(UUID.randomUUID())
-                .version(1)
-                .beerName("Galaxy Cat")
-                .beerStyle(BeerStyle.PALE_ALE)
-                .upc("12356")
-                .price(new BigDecimal("12.99"))
-                .quantityOnHand(122)
-                .createdDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .build();
-
-        var beer2 = Beer.builder()
-                .id(UUID.randomUUID())
-                .version(1)
-                .beerName("Crank")
-                .beerStyle(BeerStyle.PALE_ALE)
-                .upc("12356222")
-                .price(new BigDecimal("11.99"))
-                .quantityOnHand(392)
-                .createdDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .build();
-
-        var beer3 = Beer.builder()
-                .id(UUID.randomUUID())
-                .version(1)
-                .beerName("Sunshine City")
-                .beerStyle(BeerStyle.IPA)
-                .upc("12356")
-                .price(new BigDecimal("13.99"))
-                .quantityOnHand(144)
-                .createdDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .build();
-
-        beerMap = new HashMap<>();
-        beerMap.put(beer1.getId(), beer1);
-        beerMap.put(beer2.getId(), beer2);
-        beerMap.put(beer3.getId(), beer3);
+    @Override
+    public List<BeerDTO> fetchAllBeers() {
+        return repository.findAll().stream().map(mapper::beerToBeerDto).toList();
     }
 
     @Override
-    public List<Beer> fetchAllBeers() {
-        return new ArrayList<>(beerMap.values());
+    public Optional<BeerDTO> fetchBeer(UUID id) {
+        return repository.findById(id).map(mapper::beerToBeerDto);
     }
 
     @Override
-    public Optional<Beer> fetchBeer(UUID id) {
-        return Optional.ofNullable(beerMap.get(id));
+    public BeerDTO saveBeer(BeerDTO beerDto) {
+        var saved = repository.save(mapper.beerDtoToBeer(beerDto));
+        return mapper.beerToBeerDto(saved);
     }
 
     @Override
-    public Beer saveBeer(BeerForm form) {
-        var savedBeer = Beer.builder()
-                .id(UUID.randomUUID())
-                .version(1)
-                .createdDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .beerName(form.getBeerName())
-                .beerStyle(form.getBeerStyle())
-                .quantityOnHand(form.getQuantityOnHand())
-                .upc(form.getUpc())
-                .price(form.getPrice())
-                .build();
-        beerMap.put(savedBeer.getId(), savedBeer);
-        return savedBeer;
+    public Optional<BeerDTO> updateBeer(UUID id, BeerDTO beerDto) {
+        var atomicReference = new AtomicReference<Optional<BeerDTO>>();
+        repository.findById(id).ifPresentOrElse(foundBeer -> {
+            foundBeer.setBeerName(beerDto.getBeerName());
+            foundBeer.setBeerStyle(beerDto.getBeerStyle());
+            foundBeer.setUpc(beerDto.getUpc());
+            foundBeer.setPrice(beerDto.getPrice());
+            var result = Optional.of(mapper.beerToBeerDto(repository.save(foundBeer)));
+            atomicReference.set(result);
+        }, () -> atomicReference.set(Optional.empty()));
+
+        return atomicReference.get();
     }
 
     @Override
-    public void updateBeer(UUID id, BeerForm form) {
-        var existing = beerMap.get(id);
-        existing.setBeerName(form.getBeerName());
-        existing.setPrice(form.getPrice());
-        existing.setUpc(form.getUpc());
-        existing.setQuantityOnHand(form.getQuantityOnHand());
-    }
-
-    @Override
-    public void patchBeer(UUID id, BeerForm form) {
-        var existing = beerMap.get(id);
-        if (StringUtils.hasText(form.getBeerName())) {
-            existing.setBeerName(form.getBeerName());
+    public void patchBeer(UUID id, BeerDTO beerDto) {
+        var query = repository.findById(id);
+        if (query.isEmpty()) {
+            return;
+        }
+        var existing = query.get();
+        if (StringUtils.hasText(beerDto.getBeerName())) {
+            existing.setBeerName(beerDto.getBeerName());
         }
 
-        if (form.getBeerStyle() != null) {
-            existing.setBeerStyle(form.getBeerStyle());
+        if (beerDto.getBeerStyle() != null) {
+            existing.setBeerStyle(beerDto.getBeerStyle());
         }
 
-        if (form.getPrice() != null) {
-            existing.setPrice(form.getPrice());
+        if (beerDto.getPrice() != null) {
+            existing.setPrice(beerDto.getPrice());
         }
 
-        if (form.getQuantityOnHand() != null) {
-            existing.setQuantityOnHand(form.getQuantityOnHand());
+        if (beerDto.getQuantityOnHand() != null) {
+            existing.setQuantityOnHand(beerDto.getQuantityOnHand());
         }
 
-        if (StringUtils.hasText(form.getUpc())) {
-            existing.setUpc(form.getUpc());
+        if (StringUtils.hasText(beerDto.getUpc())) {
+            existing.setUpc(beerDto.getUpc());
         }
+        repository.save(existing);
     }
 
     @Override
     public void deleteBeer(UUID id) {
-        beerMap.remove(id);
+        repository.deleteById(id);
     }
 }

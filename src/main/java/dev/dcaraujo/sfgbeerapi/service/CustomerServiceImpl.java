@@ -1,90 +1,66 @@
 package dev.dcaraujo.sfgbeerapi.service;
 
-import dev.dcaraujo.sfgbeerapi.dto.CustomerForm;
-import dev.dcaraujo.sfgbeerapi.model.Customer;
-import lombok.extern.slf4j.Slf4j;
+import dev.dcaraujo.sfgbeerapi.dto.BeerDTO;
+import dev.dcaraujo.sfgbeerapi.dto.CustomerDTO;
+import dev.dcaraujo.sfgbeerapi.mapper.CustomerMapper;
+import dev.dcaraujo.sfgbeerapi.repository.CustomerRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
-@Slf4j
+@AllArgsConstructor
 @Service
 public class CustomerServiceImpl implements CustomerService {
-    private final Map<UUID, Customer> customerMap;
+    private final CustomerRepository repository;
+    private final CustomerMapper mapper;
 
-    public CustomerServiceImpl() {
-        var customer1 = Customer.builder()
-                .id(UUID.randomUUID())
-                .name("Customer 1")
-                .version(1)
-                .createdDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .build();
-
-        var customer2 = Customer.builder()
-                .id(UUID.randomUUID())
-                .name("Customer 2")
-                .version(1)
-                .createdDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .build();
-
-        var customer3 = Customer.builder()
-                .id(UUID.randomUUID())
-                .name("Customer 3")
-                .version(1)
-                .createdDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .build();
-
-        customerMap = new HashMap<>();
-        customerMap.put(customer1.getId(), customer1);
-        customerMap.put(customer2.getId(), customer2);
-        customerMap.put(customer3.getId(), customer3);
+    @Override
+    public List<CustomerDTO> fetchAllCustomers() {
+        return repository.findAll().stream().map(mapper::customerToCustomerDto).toList();
     }
 
     @Override
-    public List<Customer> fetchAllCustomers() {
-        return new ArrayList<>(customerMap.values());
+    public Optional<CustomerDTO> fetchCustomer(UUID id) {
+        return repository.findById(id).map(mapper::customerToCustomerDto);
     }
 
     @Override
-    public Optional<Customer> fetchCustomer(UUID uuid) {
-        var customer = customerMap.get(uuid);
-        return Optional.ofNullable(customer);
+    public CustomerDTO saveCustomer(CustomerDTO dto) {
+        var customer = mapper.customerDtoToCustomer(dto);
+        return mapper.customerToCustomerDto(repository.save(customer));
     }
 
     @Override
-    public Customer saveCustomer(CustomerForm form) {
-        var savedCustomer = Customer.builder()
-                .id(UUID.randomUUID())
-                .version(1)
-                .updateDate(LocalDateTime.now())
-                .createdDate(LocalDateTime.now())
-                .name(form.getName())
-                .build();
-        customerMap.put(savedCustomer.getId(), savedCustomer);
-        return savedCustomer;
+    public Optional<CustomerDTO> updateCustomer(UUID id, CustomerDTO dto) {
+        var atomicReference = new AtomicReference<Optional<CustomerDTO>>();
+        repository.findById(id).ifPresentOrElse(foundCustomer -> {
+            foundCustomer.setName(dto.getName());
+            var result = Optional.of(mapper.customerToCustomerDto(repository.save(foundCustomer)));
+            atomicReference.set(result);
+        }, () -> atomicReference.set(Optional.empty()));
+        return atomicReference.get();
     }
 
     @Override
-    public void updateCustomer(UUID id, CustomerForm form) {
-        var existing = customerMap.get(id);
-        existing.setName(form.getName());
-    }
-
-    @Override
-    public void patchCustomer(UUID id, CustomerForm form) {
-        var existing = customerMap.get(id);
-        if (StringUtils.hasText(form.getName())) {
-            existing.setName(form.getName());
+    public void patchCustomer(UUID id, CustomerDTO form) {
+        var query = repository.findById(id);
+        if (query.isEmpty()) {
+            return;
         }
+        var customer = query.get();
+        if (StringUtils.hasText(form.getName())) {
+            customer.setName(form.getName());
+        }
+        repository.save(customer);
     }
 
     @Override
     public void deleteCustomer(UUID id) {
-        customerMap.remove(id);
+        repository.deleteById(id);
     }
 }

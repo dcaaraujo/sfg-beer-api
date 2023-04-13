@@ -1,22 +1,21 @@
 package dev.dcaraujo.sfgbeerapi.service;
 
-import dev.dcaraujo.sfgbeerapi.dto.BeerForm;
-import dev.dcaraujo.sfgbeerapi.model.Beer;
+import dev.dcaraujo.sfgbeerapi.dto.BeerDTO;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface BeerService {
-    List<Beer> fetchAllBeers();
+    List<BeerDTO> fetchAllBeers();
 
-    Optional<Beer> fetchBeer(UUID id);
+    Optional<BeerDTO> fetchBeer(UUID id);
 
-    Beer saveBeer(BeerForm form);
+    BeerDTO saveBeer(BeerDTO beerDto);
 
-    void updateBeer(UUID id, BeerForm form);
+    Optional<BeerDTO> updateBeer(UUID id, BeerDTO beerDto);
 
-    void patchBeer(UUID id, BeerForm form);
+    void patchBeer(UUID id, BeerDTO beerDto);
 
     void deleteBeer(UUID id);
 }
