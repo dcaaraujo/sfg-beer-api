@@ -5,6 +5,7 @@ import dev.dcaraujo.sfgbeerapi.service.BeerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -30,7 +31,7 @@ public class BeerController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createBeer(@RequestBody BeerDTO beer, UriComponentsBuilder builder) {
+    public ResponseEntity<Void> createBeer(@RequestBody @Validated BeerDTO beer, UriComponentsBuilder builder) {
         var savedBeer = beerService.saveBeer(beer);
         var uri = builder.path("/api/v1/beer/{id}").buildAndExpand(savedBeer.getId()).toUri();
         return ResponseEntity.created(uri).build();

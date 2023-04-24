@@ -16,9 +16,13 @@ public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
+
     private String name;
+
     @Version
     private Integer version;
+
     private LocalDateTime createdDate;
+
     private LocalDateTime updateDate;
 }

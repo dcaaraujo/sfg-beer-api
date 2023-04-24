@@ -2,6 +2,7 @@ package dev.dcaraujo.sfgbeerapi.controller;
 
 import dev.dcaraujo.sfgbeerapi.dto.BeerDTO;
 import dev.dcaraujo.sfgbeerapi.mapper.BeerMapper;
+import dev.dcaraujo.sfgbeerapi.model.BeerStyle;
 import dev.dcaraujo.sfgbeerapi.repository.BeerRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -66,7 +68,13 @@ public class BeerControllerIntegrationTest {
 
     @Test
     public void createNewBeer() {
-        var form = BeerDTO.builder().beerName("Castle").build();
+        var form = BeerDTO.builder()
+                .beerName("Castle")
+                .beerStyle(BeerStyle.LAGER)
+                .upc("1234")
+                .price(new BigDecimal("13.13"))
+                .quantityOnHand(20)
+                .build();
 
         var result = controller.createBeer(form, uriComponentsBuilder);
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
