@@ -1,6 +1,5 @@
 package dev.dcaraujo.sfgbeerapi.service;
 
-import dev.dcaraujo.sfgbeerapi.dto.BeerDTO;
 import dev.dcaraujo.sfgbeerapi.dto.CustomerDTO;
 import dev.dcaraujo.sfgbeerapi.mapper.CustomerMapper;
 import dev.dcaraujo.sfgbeerapi.repository.CustomerRepository;
