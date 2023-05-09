@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  db:
+    image: mariadb:10.6
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: springbootdb
