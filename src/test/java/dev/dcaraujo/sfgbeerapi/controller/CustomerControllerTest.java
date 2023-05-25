@@ -46,6 +46,16 @@ public class CustomerControllerTest {
     @MockBean
     private CustomerService customerService;
 
+    private static CustomerDTO createCustomer() {
+        return CustomerDTO.builder()
+                .id(UUID.randomUUID())
+                .name("John Smith")
+                .version(1)
+                .createdDate(LocalDateTime.now())
+                .updateDate(LocalDateTime.now())
+                .build();
+    }
+
     @Test
     public void fetchingAllCustomers() throws Exception {
         var customers = List.of(createCustomer(), createCustomer(), createCustomer());
@@ -106,8 +116,7 @@ public class CustomerControllerTest {
     @Test
     public void deletingACustomer() throws Exception {
         var customerId = UUID.randomUUID();
-        var request = delete(ROOT_PATH_ID, customerId)
-                .accept(MediaType.APPLICATION_JSON);
+        var request = delete(ROOT_PATH_ID, customerId).accept(MediaType.APPLICATION_JSON);
         mockMvc.perform(request).andExpect(status().isNoContent());
         verify(customerService).deleteCustomer(idArgumentCaptor.capture());
         assertThat(idArgumentCaptor.getValue()).isEqualTo(customerId);
@@ -127,15 +136,5 @@ public class CustomerControllerTest {
         verify(customerService).patchCustomer(idArgumentCaptor.capture(), customerFormArgumentCaptor.capture());
         assertThat(idArgumentCaptor.getValue()).isEqualTo(customerId);
         assertThat(customerFormArgumentCaptor.getValue().getName()).isEqualTo(customerName);
-    }
-
-    private static CustomerDTO createCustomer() {
-        return CustomerDTO.builder()
-                .id(UUID.randomUUID())
-                .name("John Smith")
-                .version(1)
-                .createdDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .build();
     }
 }

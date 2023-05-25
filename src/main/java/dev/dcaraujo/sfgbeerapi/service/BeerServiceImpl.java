@@ -2,13 +2,17 @@ package dev.dcaraujo.sfgbeerapi.service;
 
 import dev.dcaraujo.sfgbeerapi.dto.BeerDTO;
 import dev.dcaraujo.sfgbeerapi.mapper.BeerMapper;
+import dev.dcaraujo.sfgbeerapi.model.BeerStyle;
 import dev.dcaraujo.sfgbeerapi.repository.BeerRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -17,12 +21,18 @@ import java.util.concurrent.atomic.AtomicReference;
 @Primary
 @AllArgsConstructor
 public class BeerServiceImpl implements BeerService {
+    private static final int DEFAULT_PAGE_SIZE = 25;
     private final BeerRepository repository;
     private final BeerMapper mapper;
 
+    private static PageRequest getPageRequest(int page) {
+        return PageRequest.of(page, DEFAULT_PAGE_SIZE, Sort.by("beerName").ascending());
+    }
+
     @Override
-    public List<BeerDTO> fetchAllBeers() {
-        return repository.findAll().stream().map(mapper::beerToBeerDto).toList();
+    public Page<BeerDTO> fetchAllBeers(int page) {
+        var pageRequest = getPageRequest(page);
+        return repository.findAll(pageRequest).map(mapper::beerToBeerDto);
     }
 
     @Override
@@ -31,8 +41,33 @@ public class BeerServiceImpl implements BeerService {
     }
 
     @Override
+    public Page<BeerDTO> fetchBeersWithNameContaining(@NonNull String beerName, int page) {
+        var format = "%%%s%%".formatted(beerName);
+        var pageRequest = getPageRequest(page);
+        return repository
+                .findAllByBeerNameIsLikeIgnoreCase(format, pageRequest)
+                .map(mapper::beerToBeerDto);
+    }
+
+    @Override
+    public Page<BeerDTO> fetchBeersWithStyle(@NonNull BeerStyle style, int page) {
+        var pageRequest = getPageRequest(page);
+        return repository.findAllByBeerStyle(style, pageRequest).map(mapper::beerToBeerDto);
+    }
+
+    @Override
+    public Page<BeerDTO> fetchBeersWithNameAndStyle(
+            @NonNull String beerName, @NonNull BeerStyle style, int page) {
+        return repository
+                .findAllByBeerNameIsLikeIgnoreCaseAndBeerStyle(
+                        beerName, style, getPageRequest(page))
+                .map(mapper::beerToBeerDto);
+    }
+
+    @Override
     public BeerDTO saveBeer(BeerDTO beerDto) {
-        var saved = repository.save(mapper.beerDtoToBeer(beerDto));
+        var beer = mapper.beerDtoToBeer(beerDto);
+        var saved = repository.save(beer);
         return mapper.beerToBeerDto(saved);
     }
 

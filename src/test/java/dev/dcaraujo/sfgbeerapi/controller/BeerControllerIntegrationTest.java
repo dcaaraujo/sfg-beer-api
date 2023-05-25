@@ -15,26 +15,24 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 public class BeerControllerIntegrationTest {
+    private final UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
     @Autowired
     private BeerController controller;
-
     @Autowired
     private BeerRepository beerRepository;
-
     @Autowired
     private BeerMapper beerMapper;
 
-    private final UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
-
     @Test
     public void controllerReturnsAListOfBeers() {
-        var response = controller.getAllBeers();
+        var response = controller.getAllBeers(Optional.empty(), Optional.empty(), Optional.of(false), Optional.empty());
         var beers = response.getBody();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(beers).isNotNull().isNotEmpty();
@@ -45,7 +43,7 @@ public class BeerControllerIntegrationTest {
     @Test
     public void controllerReturnsAnEmptyListOfBeers() {
         beerRepository.deleteAll();
-        var response = controller.getAllBeers();
+        var response = controller.getAllBeers(Optional.empty(), Optional.empty(), Optional.of(false), Optional.empty());
         var beers = response.getBody();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(beers).isNotNull().isEmpty();

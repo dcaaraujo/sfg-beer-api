@@ -38,7 +38,8 @@ public class DatabaseBootstrap implements CommandLineRunner {
         }
         try {
             var file = ResourceUtils.getFile("classpath:csvdata/beers.csv");
-            var beers = beerCsvReader.parse(file).stream().map(this::mapBeerCsvRecordToModel).toList();
+            var beers =
+                    beerCsvReader.parse(file).stream().map(this::mapBeerCsvRecordToModel).toList();
             beerRepository.saveAll(beers);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
@@ -46,18 +47,25 @@ public class DatabaseBootstrap implements CommandLineRunner {
     }
 
     private Beer mapBeerCsvRecordToModel(BeerCsvRecord record) {
-        var beerStyle = switch (record.getStyle()) {
-            case "American Pale Lager" -> BeerStyle.LAGER;
-            case "American Pale Ale (APA)", "American Black Ale", "Belgian Dark Ale", "American Blonde Ale" ->
-                    BeerStyle.ALE;
-            case "American IPA", "American Double / Imperial IPA", "Belgian IPA" -> BeerStyle.IPA;
-            case "American Porter" -> BeerStyle.PORTER;
-            case "Oatmeal Stout", "American Stout" -> BeerStyle.STOUT;
-            case "Saison / Farmhouse Ale" -> BeerStyle.SAISON;
-            case "Fruit / Vegetable Beer", "Winter Warmer", "Berliner Weissbier" -> BeerStyle.WHEAT;
-            case "English Pale Ale" -> BeerStyle.PALE_ALE;
-            default -> BeerStyle.PILSNER;
-        };
+        var beerStyle =
+                switch (record.getStyle()) {
+                    case "American Pale Lager" -> BeerStyle.LAGER;
+                    case "American Pale Ale (APA)",
+                            "American Black Ale",
+                            "Belgian Dark Ale",
+                            "American Blonde Ale" -> BeerStyle.ALE;
+                    case "American IPA",
+                            "American Double / Imperial IPA",
+                            "Belgian IPA" -> BeerStyle.IPA;
+                    case "American Porter" -> BeerStyle.PORTER;
+                    case "Oatmeal Stout", "American Stout" -> BeerStyle.STOUT;
+                    case "Saison / Farmhouse Ale" -> BeerStyle.SAISON;
+                    case "Fruit / Vegetable Beer",
+                            "Winter Warmer",
+                            "Berliner Weissbier" -> BeerStyle.WHEAT;
+                    case "English Pale Ale" -> BeerStyle.PALE_ALE;
+                    default -> BeerStyle.PILSNER;
+                };
         return Beer.builder()
                 .beerName(StringUtils.abbreviate(record.getBeer(), 50))
                 .beerStyle(beerStyle)
@@ -71,29 +79,32 @@ public class DatabaseBootstrap implements CommandLineRunner {
         if (customerRepository.count() != 0) {
             return;
         }
-        var customer1 = Customer.builder()
-                .id(UUID.randomUUID())
-                .name("Customer 1")
-                .version(1)
-                .createdDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .build();
+        var customer1 =
+                Customer.builder()
+                        .id(UUID.randomUUID())
+                        .name("Customer 1")
+                        .version(1)
+                        .createdDate(LocalDateTime.now())
+                        .updateDate(LocalDateTime.now())
+                        .build();
 
-        var customer2 = Customer.builder()
-                .id(UUID.randomUUID())
-                .name("Customer 2")
-                .version(1)
-                .createdDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .build();
+        var customer2 =
+                Customer.builder()
+                        .id(UUID.randomUUID())
+                        .name("Customer 2")
+                        .version(1)
+                        .createdDate(LocalDateTime.now())
+                        .updateDate(LocalDateTime.now())
+                        .build();
 
-        var customer3 = Customer.builder()
-                .id(UUID.randomUUID())
-                .name("Customer 3")
-                .version(1)
-                .createdDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .build();
+        var customer3 =
+                Customer.builder()
+                        .id(UUID.randomUUID())
+                        .name("Customer 3")
+                        .version(1)
+                        .createdDate(LocalDateTime.now())
+                        .updateDate(LocalDateTime.now())
+                        .build();
 
         customerRepository.saveAll(Arrays.asList(customer1, customer2, customer3));
     }

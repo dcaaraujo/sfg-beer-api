@@ -10,6 +10,7 @@ import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,6 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -48,15 +50,29 @@ public class BeerControllerTest {
     @MockBean
     private BeerService beerService;
 
+    private static BeerDTO createBeer() {
+        return BeerDTO.builder()
+                .id(UUID.randomUUID())
+                .version(1)
+                .beerName("Galaxy Cat")
+                .beerStyle(BeerStyle.PALE_ALE)
+                .upc("12356")
+                .price(new BigDecimal("12.99"))
+                .quantityOnHand(122)
+                .createdDate(LocalDateTime.now())
+                .updateDate(LocalDateTime.now())
+                .build();
+    }
+
     @Test
     public void fetchingAllBeers() throws Exception {
         var beers = List.of(createBeer(), createBeer(), createBeer());
-        given(beerService.fetchAllBeers()).willReturn(beers);
+        given(beerService.fetchAllBeers(anyInt())).willReturn(new PageImpl<>(beers));
         var request = get(ROOT_PATH).accept(MediaType.APPLICATION_JSON);
         mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.length()", is(beers.size())));
+                .andExpect(jsonPath("$.content.length()", is(beers.size())));
     }
 
     @Test
@@ -80,30 +96,34 @@ public class BeerControllerTest {
 
     @Test
     public void creatingAbeer() throws Exception {
-        var form = BeerDTO.builder()
-                .beerName("Castle")
-                .beerStyle(BeerStyle.LAGER)
-                .upc("1212323")
-                .quantityOnHand(100)
-                .price(new BigDecimal("2.00"))
-                .build();
+        var form =
+                BeerDTO.builder()
+                        .beerName("Castle")
+                        .beerStyle(BeerStyle.LAGER)
+                        .upc("1212323")
+                        .quantityOnHand(100)
+                        .price(new BigDecimal("2.00"))
+                        .build();
         given(beerService.saveBeer(any())).willReturn(createBeer());
-        var request = post(ROOT_PATH)
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(form));
+        var request =
+                post(ROOT_PATH)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(form));
         mockMvc.perform(request)
                 .andExpect(status().isCreated())
                 .andExpect(header().exists("Location"));
     }
 
     @Test
+    @SuppressWarnings("DataFlowIssue")
     public void creatingABeerFailsIfNameIsNull() throws Exception {
         var dto = BeerDTO.builder().beerName(null).build();
-        var request = post(ROOT_PATH)
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto));
+        var request =
+                post(ROOT_PATH)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto));
         mockMvc.perform(request)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.length()", is(2)));
@@ -114,12 +134,12 @@ public class BeerControllerTest {
         BeerDTO beer = createBeer();
         given(beerService.updateBeer(any(), any())).willReturn(Optional.of(beer));
 
-        var request = put(ROOT_PATH_ID, beer.getId())
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(beer));
-        mockMvc.perform(request)
-                .andExpect(status().isNoContent());
+        var request =
+                put(ROOT_PATH_ID, beer.getId())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(beer));
+        mockMvc.perform(request).andExpect(status().isNoContent());
 
         verify(beerService).updateBeer(idArgumentCaptor.capture(), any(BeerDTO.class));
         assertThat(idArgumentCaptor.getValue()).isEqualTo(beer.getId());
@@ -128,8 +148,7 @@ public class BeerControllerTest {
     @Test
     public void deletingABeer() throws Exception {
         var beerId = UUID.randomUUID();
-        var request = delete(ROOT_PATH_ID, beerId)
-                .accept(MediaType.APPLICATION_JSON);
+        var request = delete(ROOT_PATH_ID, beerId).accept(MediaType.APPLICATION_JSON);
         mockMvc.perform(request).andExpect(status().isNoContent());
         verify(beerService).deleteBeer(idArgumentCaptor.capture());
         assertThat(idArgumentCaptor.getValue()).isEqualTo(beerId);
@@ -141,27 +160,14 @@ public class BeerControllerTest {
         var beerName = "Windhoek";
         var map = new HashMap<String, Object>();
         map.put("beerName", beerName);
-        var request = patch(ROOT_PATH_ID, beerId)
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(map));
+        var request =
+                patch(ROOT_PATH_ID, beerId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(map));
         mockMvc.perform(request).andExpect(status().isNoContent());
         verify(beerService).patchBeer(idArgumentCaptor.capture(), beerFormArgumentCaptor.capture());
         assertThat(idArgumentCaptor.getValue()).isEqualTo(beerId);
         assertThat(beerFormArgumentCaptor.getValue().getBeerName()).isEqualTo(beerName);
-    }
-
-    private static BeerDTO createBeer() {
-        return BeerDTO.builder()
-                .id(UUID.randomUUID())
-                .version(1)
-                .beerName("Galaxy Cat")
-                .beerStyle(BeerStyle.PALE_ALE)
-                .upc("12356")
-                .price(new BigDecimal("12.99"))
-                .quantityOnHand(122)
-                .createdDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .build();
     }
 }

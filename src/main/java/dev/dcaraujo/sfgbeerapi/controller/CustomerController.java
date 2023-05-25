@@ -31,7 +31,8 @@ public class CustomerController {
     @PostMapping
     public ResponseEntity<Void> createCustomer(@RequestBody CustomerDTO customer, UriComponentsBuilder builder) {
         var savedCustomer = customerService.saveCustomer(customer);
-        var uri = builder.path("/api/v1/customer/{id}").buildAndExpand(savedCustomer.getId()).toUri();
+        var uri =
+                builder.path("/api/v1/customer/{id}").buildAndExpand(savedCustomer.getId()).toUri();
         return ResponseEntity.created(uri).build();
     }
 
